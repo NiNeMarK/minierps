@@ -38,6 +38,8 @@ functions:
 | `create_invoice_for_order` | create one invoice from a sales order |
 | `record_invoice_payment` | add a payment and update invoice status |
 | `invite_company_user` | create auth account + profile inside an existing tenant |
+| `resolve_warehouse_id` | resolve the requested or default warehouse for a tenant |
+| `ensure_product_stock` | create a zero-qty product/warehouse row when missing |
 | `provision_company_for_user` | create company/profile/default reference data |
 | `assert_company_member` | guard used by the functions above |
 
@@ -55,7 +57,9 @@ functions:
 - `companies` — name, currency, timezone
 - `profiles` — user_id (PK), company_id, full_name, role
 - `branches`, `warehouses`, `categories`, `units`
-- `products` — sku, prices, `stock_qty`, `reorder_point`, `is_active`
+- `products` — sku, prices, `stock_qty` (aggregate), `reorder_point`, `is_active`
+- `warehouses` — name, code, branch_id; every tenant gets a `MAIN` warehouse
+- `product_stocks` — qty per `(product_id, warehouse_id)`; sum = `products.stock_qty`
 - `customers`, `suppliers`
 
 ### Transactions
@@ -63,7 +67,9 @@ functions:
 - `sales_orders` / `sales_order_lines`
 - `purchase_orders` / `purchase_order_lines`
 - `invoices` / `payments` — one invoice per sales order, many payments per invoice
-- `stock_movements` — signed `change_qty`, `balance_after`, reference type/id
+- `stock_movements` — signed `change_qty`, `balance_after`, `warehouse_id`, reference type/id
+- `sales_orders` / `purchase_orders` — optional `warehouse_id` record where
+  stock was deducted or received
 
 Money and quantities use `numeric(14,2)`. Drizzle maps them to `number` with
 `mode: "number"`.

@@ -20,6 +20,7 @@ import { branchRepository } from "@/repositories/branch_repository";
 import { productRepository } from "@/repositories/product_repository";
 import { purchaseRepository } from "@/repositories/purchase_repository";
 import { supplierRepository } from "@/repositories/supplier_repository";
+import { warehouseRepository } from "@/repositories/warehouse_repository";
 
 export const metadata = { title: "จัดซื้อ" };
 
@@ -38,13 +39,15 @@ const statusLabel = {
 };
 
 export default async function PurchasesPage() {
-  const [orders, suppliers, branches, products, company] = await Promise.all([
-    purchaseRepository.list(),
-    supplierRepository.list(),
-    branchRepository.list(),
-    productRepository.list({ activeOnly: true }),
-    getCurrentCompany(),
-  ]);
+  const [orders, suppliers, branches, warehouses, products, company] =
+    await Promise.all([
+      purchaseRepository.list(),
+      supplierRepository.list(),
+      branchRepository.list(),
+      warehouseRepository.list(),
+      productRepository.list({ activeOnly: true }),
+      getCurrentCompany(),
+    ]);
 
   const currency = company?.currency ?? "THB";
 
@@ -62,6 +65,9 @@ export default async function PurchasesPage() {
             branches={branches
               .filter((branch) => branch.is_active)
               .map((branch) => ({ id: branch.id, name: branch.name }))}
+            warehouses={warehouses
+              .filter((warehouse) => warehouse.is_active)
+              .map((warehouse) => ({ id: warehouse.id, name: warehouse.name }))}
             products={products.map((product) => ({
               id: product.id,
               name: product.name,

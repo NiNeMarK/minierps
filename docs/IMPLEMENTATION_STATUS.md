@@ -17,7 +17,7 @@
 | Inventory | ✅ | สต็อกคงเหลือ, ปรับสต็อก, ประวัติ movement |
 | Company Settings | ✅ | ชื่อบริษัท/สกุลเงิน/เขตเวลา (owner, admin) |
 | Tenant isolation | ✅ | ทุก query/repository กรอง `company_id` จาก session; server actions ตรวจ auth ซ้ำ |
-| Database migrations | ✅ | Drizzle Kit (`drizzle/0000`–`0003`) |
+| Database migrations | ✅ | Drizzle Kit (`drizzle/0000`–`0005`) |
 
 ## Phase 2 — invoicing, users, reports
 
@@ -29,7 +29,8 @@
 | Role-based access | 🟡 | owner/admin จัดการผู้ใช้และตั้งค่าบริษัท; manager/staff ใช้ฟีเจอร์ปฏิบัติการได้; ยังไม่มี matrix แบบละเมนู |
 | Change password | ✅ | เปลี่ยนรหัสผ่านตัวเอง พร้อมยกเลิก session อื่น |
 | Reports | ✅ | รายงานขาย/จัดซื้อ/สต็อก/ลูกหนี้ตามช่วงเวลา |
-| CSV export | ✅ | ส่งออก 4 รายงานเป็น CSV พร้อม BOM ภาษาไทย |
+| CSV export | ✅ | ส่งออก 5 รายงานเป็น CSV พร้อม BOM ภาษาไทย |
+| Multi-warehouse | ✅ | แยกสต็อกต่อคลัง (`product_stocks`), เลือกคลังในเอกสารขาย/สั่งซื้อ/ปรับสต็อก, รายงานแยกคลัง |
 | Email invitation | ⬜ | ยังไม่ได้ส่งอีเมลเชิญแบบมีลิงก์ตั้งรหัสผ่าน (ตอนนี้แจ้งรหัสผ่านให้เอง) |
 
 ## สถาปัตยกรรมข้อมูล
@@ -42,17 +43,19 @@
   เพราะ HTTP driver ไม่รองรับ): `create_sales_order`, `create_purchase_order`,
   `receive_purchase_order`, `adjust_stock`, `create_invoice_for_order`,
   `record_invoice_payment`, `invite_company_user`
+- สต็อกแยกเก็บใน `product_stocks` (ต่อ product + warehouse) และมี
+  `products.stock_qty` เป็นยอดรวม; ทุกการเคลื่อนไหวอัปเดตทั้งสองตารางและเขียน
+  `stock_movements.warehouse_id` ใน transaction เดียว
 - ทุกตารางธุรกิจมี `company_id`; repository รับค่าจาก `requireProfile()`/
   `requireTenant()` และใส่เงื่อนไขทุกครั้ง (ไม่มี RLS ของ Supabase แล้ว)
 
 ## ยังไม่ทำ (แนะนำลำดับถัดไป)
 
-1. **Warehouse หลายคลัง** — ปัจจุบันสต็อกเก็บที่ระดับสินค้า (`products.stock_qty`)
-2. **User invitation แบบอีเมล** — ลิงก์ยืนยัน + ตั้งรหัสผ่านเอง + หมดอายุ
-3. **Reports** — PDF/Excel, กรองตามลูกค้า/สินค้า/สาขา
-4. **Automated tests** — unit test ของ schema/repository และ integration test ของ RPC
-5. **Audit log UI** — บันทึกการเปลี่ยนแปลงสิทธิ์/การเงิน
-6. **POS / CRM / Promotion** — Phase 2 ตาม roadmap
+1. **User invitation แบบอีเมล** — ลิงก์ยืนยัน + ตั้งรหัสผ่านเอง + หมดอายุ
+2. **Reports** — PDF/Excel, กรองตามลูกค้า/สินค้า/สาขา
+3. **Automated tests** — unit test ของ schema/repository และ integration test ของ RPC
+4. **Audit log UI** — บันทึกการเปลี่ยนแปลงสิทธิ์/การเงิน
+5. **POS / CRM / Promotion** — Phase 2 ตาม roadmap
 
 ## คู่มือที่เกี่ยวข้อง
 

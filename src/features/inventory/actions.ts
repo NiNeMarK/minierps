@@ -18,6 +18,7 @@ export async function adjustStockAction(
       parsed.data.product_id,
       parsed.data.change_qty,
       parsed.data.reason,
+      parsed.data.warehouse_id,
     );
 
     revalidatePath("/inventory");

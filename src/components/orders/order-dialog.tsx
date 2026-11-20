@@ -41,12 +41,14 @@ export function OrderDialog({
   kind,
   parties,
   branches,
+  warehouses,
   products,
   action,
 }: {
   kind: "sales" | "purchase";
   parties: Option[];
   branches: Option[];
+  warehouses: Option[];
   products: ProductOption[];
   action: (
     values: Record<string, unknown>,
@@ -57,6 +59,7 @@ export function OrderDialog({
   const [open, setOpen] = useState(false);
   const [partyId, setPartyId] = useState("");
   const [branchId, setBranchId] = useState("");
+  const [warehouseId, setWarehouseId] = useState("");
   const [note, setNote] = useState("");
   const [lines, setLines] = useState<Line[]>([
     { product_id: "", qty: "1", unit_price: "0" },
@@ -72,6 +75,7 @@ export function OrderDialog({
   function reset() {
     setPartyId("");
     setBranchId("");
+    setWarehouseId("");
     setNote("");
     setLines([{ product_id: "", qty: "1", unit_price: "0" }]);
     setError(null);
@@ -100,6 +104,7 @@ export function OrderDialog({
       customer_id: isSales ? partyId : null,
       supplier_id: isSales ? null : partyId,
       branch_id: branchId || null,
+      warehouse_id: warehouseId || null,
       note,
       lines: lines.map((line) => ({
         product_id: line.product_id,
@@ -188,6 +193,23 @@ export function OrderDialog({
                 {branches.map((branch) => (
                   <option key={branch.id} value={branch.id}>
                     {branch.name}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+
+            <Field
+              label="คลังสินค้า"
+              hint={isSales ? "ตัดสต็อกจากคลังนี้" : "รับสินค้าเข้าคลังนี้"}
+            >
+              <Select
+                value={warehouseId}
+                onChange={(event) => setWarehouseId(event.target.value)}
+              >
+                <option value="">คลังหลัก (ค่าเริ่มต้น)</option>
+                {warehouses.map((warehouse) => (
+                  <option key={warehouse.id} value={warehouse.id}>
+                    {warehouse.name}
                   </option>
                 ))}
               </Select>

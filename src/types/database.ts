@@ -33,6 +33,21 @@ export interface Warehouse {
   code: string | null;
   is_active: boolean;
   created_at: Date;
+  branches?: Pick<Branch, "id" | "name"> | null;
+}
+
+export interface ProductStock {
+  id: string;
+  company_id: string;
+  product_id: string;
+  warehouse_id: string;
+  qty: number;
+  updated_at: Date;
+  warehouses?: Pick<Warehouse, "id" | "name" | "code"> | null;
+  products?: Pick<
+    Product,
+    "id" | "name" | "sku" | "cost_price" | "reorder_point"
+  > | null;
 }
 
 export interface Category {
@@ -65,6 +80,7 @@ export interface Product {
   created_at: Date;
   categories?: Pick<Category, "id" | "name"> | null;
   units?: Pick<Unit, "id" | "name" | "symbol"> | null;
+  product_stocks?: ProductStock[];
 }
 
 export interface Customer {
@@ -94,6 +110,7 @@ export interface StockMovement {
   created_by: string | null;
   created_at: Date;
   products?: Pick<Product, "id" | "name" | "sku"> | null;
+  warehouses?: Pick<Warehouse, "id" | "name" | "code"> | null;
 }
 
 export interface SalesOrder {
@@ -101,6 +118,7 @@ export interface SalesOrder {
   company_id: string;
   branch_id: string | null;
   customer_id: string | null;
+  warehouse_id: string | null;
   order_no: string;
   status: "draft" | "confirmed" | "cancelled";
   total_amount: number;
@@ -108,6 +126,7 @@ export interface SalesOrder {
   created_by: string | null;
   created_at: Date;
   customers?: Pick<Customer, "id" | "name"> | null;
+  warehouses?: Pick<Warehouse, "id" | "name" | "code"> | null;
 }
 
 export interface SalesOrderLine {
@@ -130,6 +149,7 @@ export interface PurchaseOrder {
   company_id: string;
   branch_id: string | null;
   supplier_id: string | null;
+  warehouse_id: string | null;
   order_no: string;
   status: "draft" | "ordered" | "received" | "cancelled";
   total_amount: number;
@@ -138,6 +158,7 @@ export interface PurchaseOrder {
   created_at: Date;
   received_at: Date | null;
   suppliers?: Pick<Supplier, "id" | "name"> | null;
+  warehouses?: Pick<Warehouse, "id" | "name" | "code"> | null;
 }
 
 export interface PurchaseOrderLine {

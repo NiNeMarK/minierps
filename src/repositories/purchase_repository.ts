@@ -18,7 +18,7 @@ export const purchaseRepository = {
       where: eq(purchaseOrders.company_id, profile.company_id),
       orderBy: desc(purchaseOrders.created_at),
       limit: 100,
-      with: { suppliers: true },
+      with: { suppliers: true, warehouses: true },
     });
   },
 
@@ -32,6 +32,7 @@ export const purchaseRepository = {
       ),
       with: {
         suppliers: true,
+        warehouses: true,
         purchase_order_lines: { with: { products: true } },
       },
     });
@@ -57,7 +58,8 @@ export const purchaseRepository = {
         ${(values.supplier_id as string | null) ?? null}::uuid,
         ${(values.branch_id as string | null) ?? null}::uuid,
         ${payload}::jsonb,
-        ${(values.note as string | null) ?? null}
+        ${(values.note as string | null) ?? null},
+        ${(values.warehouse_id as string | null) ?? null}::uuid
       ) as id
     `);
 

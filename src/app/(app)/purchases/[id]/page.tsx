@@ -72,7 +72,15 @@ export default async function PurchaseOrderPage({
         }
       />
 
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Card className="p-4">
+          <p className="text-xs uppercase tracking-wide text-slate-400">
+            คลังที่รับสินค้า
+          </p>
+          <p className="mt-1 font-medium text-slate-900">
+            {order.warehouses?.name ?? "คลังหลัก"}
+          </p>
+        </Card>
         <Card className="p-4">
           <p className="text-xs uppercase tracking-wide text-slate-400">
             ผู้ขาย

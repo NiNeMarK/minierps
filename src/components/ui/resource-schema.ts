@@ -6,6 +6,7 @@ import {
   productInputSchema,
   stockAdjustmentSchema,
   supplierInputSchema,
+  warehouseInputSchema,
 } from "@/schemas/master-data";
 
 /**
@@ -17,6 +18,7 @@ export const resourceSchemas = {
   customer: customerInputSchema,
   supplier: supplierInputSchema,
   branch: branchInputSchema,
+  warehouse: warehouseInputSchema,
   stock: stockAdjustmentSchema,
 } satisfies Record<string, ZodType>;
 

@@ -10,6 +10,8 @@
 - สร้างบริษัท + สาขา + หน่วยนับ + หมวดหมู่เริ่มต้นอัตโนมัติเมื่อสมัคร
 - Master data: สินค้า, ลูกค้า, ผู้ขาย, สาขา (เพิ่ม / แก้ไข / ปิดใช้งาน / ค้นหา)
 - Inventory: สต็อกคงเหลือ, ปรับสต็อก, ประวัติการเคลื่อนไหวทุกครั้ง
+- Multi-warehouse: แยกสต็อกต่อคลัง, เลือกคลังตอนขาย/สั่งซื้อ/ปรับสต็อก,
+  รายงานสต็อกแยกคลัง (ยอดรวมของสินค้ายังดูได้ที่หน้าสินค้า)
 - Sales: สร้างเอกสารขายหลายรายการ, ตัดสต็อกแบบ transactional ผ่าน Postgres function
 - Purchases: ใบสั่งซื้อ, รับสินค้าเข้าสต็อก
 - Dashboard: ยอดขายเดือนนี้, เอกสารล่าสุด, สินค้าใกล้หมด, มูลค่าสต็อก
@@ -102,6 +104,7 @@ src/
       suppliers/
       branches/
       inventory/
+      warehouses/
       sales/[id]/
       purchases/[id]/
       invoices/
@@ -110,7 +113,7 @@ src/
       reports/
       settings/
     api/auth/         # Better Auth route handler
-    api/reports/      # CSV export endpoints (sales/purchases/stock/receivables)
+    api/reports/      # CSV export (sales/purchases/stock/warehouse-stock/receivables)
     auth/             # login / register
   components/
     layout/           # sidebar + shell
@@ -133,6 +136,8 @@ docs/                 # product & technical documentation
   (`create_sales_order`); ถ้าสินค้าใดไม่พอจะ rollback ทั้งเอกสาร
 - รับสินค้าจากใบสั่งซื้อ: เพิ่มสต็อกและบันทึก movement (`receive_purchase_order`)
 - ปรับสต็อก: บันทึก movement พร้อมยอดคงเหลือหลังปรับ (`adjust_stock`)
+- สต็อกแยกคลัง: ทุกการขาย/รับของ/ปรับสต็อกอัปเดต `product_stocks` ของคลังที่เลือก
+  และ `products.stock_qty` (ยอดรวม) ใน transaction เดียว; ตรวจสต็อกจากคลังที่เลือก
 - ออกใบแจ้งหนี้: หนึ่งใบต่อเอกสารขาย อัปเดต `paid_amount` และสถานะ
   ผ่าน `record_invoice_payment`; ห้ามรับชำระเกินยอดคงเหลือ
 - เชิญผู้ใช้: สร้าง auth user + account + profile ใน transaction เดียว
@@ -146,5 +151,5 @@ docs/                 # product & technical documentation
 - คู่มือผู้ใช้ (พร้อมภาพหน้าจอ): [`docs/USER_GUIDE.md`](docs/USER_GUIDE.md)
 - สถานะการพัฒนา: [`docs/IMPLEMENTATION_STATUS.md`](docs/IMPLEMENTATION_STATUS.md)
 
-สิ่งที่ยังไม่อยู่ในรอบนี้: คลังสินค้าหลายคลังใน UI, หน้าเชิญผู้ใช้แบบส่งอีเมล,
-รายงาน PDF/Excel, และชุดทดสอบอัตโนมัติ
+สิ่งที่ยังไม่อยู่ในรอบนี้: หน้าเชิญผู้ใช้แบบส่งอีเมล, รายงาน PDF/Excel,
+และชุดทดสอบอัตโนมัติ

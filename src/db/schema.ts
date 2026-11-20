@@ -161,7 +161,39 @@ export const warehouses = pgTable(
       .notNull()
       .defaultNow(),
   },
-  (table) => [index("idx_warehouses_company").on(table.company_id)],
+  (table) => [
+    index("idx_warehouses_company").on(table.company_id),
+    unique("warehouses_company_code_unique").on(table.company_id, table.code),
+  ],
+);
+
+export const productStocks = pgTable(
+  "product_stocks",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    company_id: uuid("company_id")
+      .notNull()
+      .references(() => companies.id, { onDelete: "cascade" }),
+    product_id: uuid("product_id")
+      .notNull()
+      .references(() => products.id, { onDelete: "cascade" }),
+    warehouse_id: uuid("warehouse_id")
+      .notNull()
+      .references(() => warehouses.id, { onDelete: "cascade" }),
+    qty: numeric("qty", { precision: 14, scale: 2, mode: "number" })
+      .notNull()
+      .default(0),
+    updated_at: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    unique("product_stocks_product_warehouse_unique").on(
+      table.product_id,
+      table.warehouse_id,
+    ),
+    index("idx_product_stocks_company").on(table.company_id, table.warehouse_id),
+  ],
 );
 
 export const categories = pgTable(
@@ -344,6 +376,9 @@ export const salesOrders = pgTable(
     customer_id: uuid("customer_id").references(() => customers.id, {
       onDelete: "set null",
     }),
+    warehouse_id: uuid("warehouse_id").references(() => warehouses.id, {
+      onDelete: "set null",
+    }),
     order_no: text("order_no").notNull(),
     status: text("status")
       .$type<"draft" | "confirmed" | "cancelled">()
@@ -413,6 +448,9 @@ export const purchaseOrders = pgTable(
       onDelete: "set null",
     }),
     supplier_id: uuid("supplier_id").references(() => suppliers.id, {
+      onDelete: "set null",
+    }),
+    warehouse_id: uuid("warehouse_id").references(() => warehouses.id, {
       onDelete: "set null",
     }),
     order_no: text("order_no").notNull(),
@@ -564,7 +602,7 @@ export const payments = pgTable(
 // Relations — named to match the shapes the UI already consumes.
 // ---------------------------------------------------------------------------
 
-export const productsRelations = relations(products, ({ one }) => ({
+export const productsRelations = relations(products, ({ one, many }) => ({
   categories: one(categories, {
     fields: [products.category_id],
     references: [categories.id],
@@ -572,6 +610,26 @@ export const productsRelations = relations(products, ({ one }) => ({
   units: one(units, {
     fields: [products.unit_id],
     references: [units.id],
+  }),
+  product_stocks: many(productStocks),
+}));
+
+export const warehousesRelations = relations(warehouses, ({ one, many }) => ({
+  branches: one(branches, {
+    fields: [warehouses.branch_id],
+    references: [branches.id],
+  }),
+  product_stocks: many(productStocks),
+}));
+
+export const productStocksRelations = relations(productStocks, ({ one }) => ({
+  products: one(products, {
+    fields: [productStocks.product_id],
+    references: [products.id],
+  }),
+  warehouses: one(warehouses, {
+    fields: [productStocks.warehouse_id],
+    references: [warehouses.id],
   }),
 }));
 
@@ -582,6 +640,10 @@ export const stockMovementsRelations = relations(
       fields: [stockMovements.product_id],
       references: [products.id],
     }),
+    warehouses: one(warehouses, {
+      fields: [stockMovements.warehouse_id],
+      references: [warehouses.id],
+    }),
   }),
 );
 
@@ -591,6 +653,10 @@ export const salesOrdersRelations = relations(salesOrders, ({ one, many }) => ({
     references: [customers.id],
   }),
   sales_order_lines: many(salesOrderLines),
+  warehouses: one(warehouses, {
+    fields: [salesOrders.warehouse_id],
+    references: [warehouses.id],
+  }),
   invoices: one(invoices, {
     fields: [salesOrders.id],
     references: [invoices.sales_order_id],
@@ -619,6 +685,10 @@ export const purchaseOrdersRelations = relations(
       references: [suppliers.id],
     }),
     purchase_order_lines: many(purchaseOrderLines),
+    warehouses: one(warehouses, {
+      fields: [purchaseOrders.warehouse_id],
+      references: [warehouses.id],
+    }),
   }),
 );
 

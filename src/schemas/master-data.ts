@@ -47,9 +47,17 @@ export const branchInputSchema = z.object({
   is_active: z.coerce.boolean().default(true),
 });
 
+export const warehouseInputSchema = z.object({
+  name: z.string().trim().min(1, "ชื่อคลังสินค้าจำเป็น").max(200),
+  code: optionalText,
+  branch_id: optionalUuid,
+  is_active: z.coerce.boolean().default(true),
+});
+
 export const customerSchema = customerInputSchema;
 export const supplierSchema = supplierInputSchema;
 export const branchSchema = branchInputSchema;
+export const warehouseSchema = warehouseInputSchema;
 export const productSchema = productInputSchema;
 
 export type ProductInput = z.input<typeof productInputSchema>;
@@ -60,6 +68,8 @@ export type SupplierInput = z.input<typeof supplierInputSchema>;
 export type SupplierValues = z.output<typeof supplierInputSchema>;
 export type BranchInput = z.input<typeof branchInputSchema>;
 export type BranchValues = z.output<typeof branchInputSchema>;
+export type WarehouseInput = z.input<typeof warehouseInputSchema>;
+export type WarehouseValues = z.output<typeof warehouseInputSchema>;
 
 export const orderLineSchema = z.object({
   product_id: z.string().uuid("Select a product"),
@@ -70,6 +80,7 @@ export const orderLineSchema = z.object({
 export const salesOrderInputSchema = z.object({
   customer_id: optionalUuid,
   branch_id: optionalUuid,
+  warehouse_id: optionalUuid,
   note: optionalText,
   lines: z.array(orderLineSchema).min(1, "Add at least one product"),
 });
@@ -77,12 +88,14 @@ export const salesOrderInputSchema = z.object({
 export const purchaseOrderInputSchema = z.object({
   supplier_id: optionalUuid,
   branch_id: optionalUuid,
+  warehouse_id: optionalUuid,
   note: optionalText,
   lines: z.array(orderLineSchema).min(1, "Add at least one product"),
 });
 
 export const stockAdjustmentSchema = z.object({
   product_id: z.string().uuid("Select a product"),
+  warehouse_id: optionalUuid,
   change_qty: z.coerce
     .number()
     .refine((value) => value !== 0, "Quantity cannot be zero"),

@@ -3,6 +3,7 @@ import { and, asc, desc, eq, gte, lte, ne } from "drizzle-orm";
 import { db } from "@/db";
 import {
   invoices,
+  productStocks,
   products,
   purchaseOrders,
   salesOrders,
@@ -11,6 +12,7 @@ import { requireProfile } from "@/lib/auth";
 import type {
   Invoice,
   Product,
+  ProductStock,
   PurchaseOrder,
   SalesOrder,
 } from "@/types/database";
@@ -79,6 +81,16 @@ export const reportRepository = {
         eq(products.is_active, true),
       ),
       orderBy: asc(products.sku),
+    });
+  },
+
+  async stockByWarehouse(): Promise<ProductStock[]> {
+    const profile = await requireProfile();
+
+    return db.query.productStocks.findMany({
+      where: eq(productStocks.company_id, profile.company_id),
+      orderBy: asc(productStocks.updated_at),
+      with: { products: true, warehouses: true },
     });
   },
 

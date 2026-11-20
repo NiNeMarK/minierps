@@ -15,7 +15,7 @@ export const salesRepository = {
       where: eq(salesOrders.company_id, profile.company_id),
       orderBy: desc(salesOrders.created_at),
       limit: 100,
-      with: { customers: true },
+      with: { customers: true, warehouses: true },
     });
   },
 
@@ -29,6 +29,7 @@ export const salesRepository = {
       ),
       with: {
         customers: true,
+        warehouses: true,
         sales_order_lines: { with: { products: true } },
       },
     });
@@ -54,7 +55,8 @@ export const salesRepository = {
         ${(values.customer_id as string | null) ?? null}::uuid,
         ${(values.branch_id as string | null) ?? null}::uuid,
         ${payload}::jsonb,
-        ${(values.note as string | null) ?? null}
+        ${(values.note as string | null) ?? null},
+        ${(values.warehouse_id as string | null) ?? null}::uuid
       ) as id
     `);
 

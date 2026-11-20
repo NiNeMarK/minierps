@@ -1,7 +1,13 @@
-import { Card, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { buttonStyles } from "@/components/ui/button";
+import { Card, CardHeader } from "@/components/ui/card";
+import { Field } from "@/components/ui/field";
 import { PageHeader } from "@/components/ui/page-header";
-import { ResourceDialog, type DialogField } from "@/components/ui/resource-dialog";
+import {
+  ResourceDialog,
+  type DialogField,
+} from "@/components/ui/resource-dialog";
+import { Select } from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -14,18 +20,28 @@ import {
 import { adjustStockAction } from "@/features/inventory/actions";
 import { formatCurrency, formatDate, formatNumber } from "@/lib/utils";
 import { inventoryRepository } from "@/repositories/inventory_repository";
-import { productRepository } from "@/repositories/product_repository";
+import { warehouseRepository } from "@/repositories/warehouse_repository";
 
 export const metadata = { title: "สต็อกสินค้า" };
 
-export default async function InventoryPage() {
-  const [products, movements] = await Promise.all([
-    productRepository.list({ activeOnly: true }),
-    inventoryRepository.movements(),
+export default async function InventoryPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ warehouse?: string }>;
+}) {
+  const { warehouse } = await searchParams;
+
+  const [warehouses, stocks, movements] = await Promise.all([
+    warehouseRepository.list(),
+    inventoryRepository.stocks(undefined, warehouse || undefined),
+    inventoryRepository.movements(undefined, warehouse || undefined),
   ]);
 
-  const totalValue = products.reduce(
-    (sum, product) => sum + product.stock_qty * product.cost_price,
+  const activeWarehouses = warehouses.filter((item) => item.is_active);
+  const selectedName = warehouses.find((item) => item.id === warehouse)?.name;
+  const totalValue = stocks.reduce(
+    (sum, row) =>
+      sum + row.qty * (row.products?.cost_price ?? 0),
     0,
   );
 
@@ -34,10 +50,27 @@ export default async function InventoryPage() {
       name: "product_id",
       label: "สินค้า",
       type: "select",
-      options: products.map((product) => ({
-        value: product.id,
-        label: `${product.sku} — ${product.name} (คงเหลือ ${product.stock_qty})`,
+      options: Array.from(
+        new Map(
+          stocks.map((row) => [
+            row.product_id,
+            {
+              value: row.product_id,
+              label: `${row.products?.sku ?? ""} — ${row.products?.name ?? ""}`,
+            },
+          ]),
+        ).values(),
+      ),
+    },
+    {
+      name: "warehouse_id",
+      label: "คลังสินค้า",
+      type: "select",
+      options: activeWarehouses.map((item) => ({
+        value: item.id,
+        label: item.name,
       })),
+      hint: "เลือกคลังที่จะปรับ ยอดรวมของสินค้าจะถูกอัปเดตอัตโนมัติ",
     },
     {
       name: "change_qty",
@@ -59,7 +92,7 @@ export default async function InventoryPage() {
     <div className="space-y-6">
       <PageHeader
         title="สต็อกสินค้า"
-        description={`มูลค่าสต็อกตามราคาทุน ${formatCurrency(totalValue)}`}
+        description={`มูลค่าสต็อกตามราคาทุน ${formatCurrency(totalValue)}${selectedName ? ` · คลัง ${selectedName}` : ""}`}
         actions={
           <ResourceDialog
             triggerLabel="ปรับสต็อก"
@@ -70,6 +103,7 @@ export default async function InventoryPage() {
             schema="stock"
             defaultValues={{
               product_id: "",
+              warehouse_id: warehouse ?? activeWarehouses[0]?.id ?? "",
               change_qty: "",
               reason: "",
             }}
@@ -78,13 +112,40 @@ export default async function InventoryPage() {
         }
       />
 
+      <Card className="p-4">
+        <form method="get" className="flex flex-wrap items-end gap-3">
+          <Field label="กรองตามคลัง" htmlFor="warehouse-filter">
+            <Select
+              id="warehouse-filter"
+              name="warehouse"
+              defaultValue={warehouse ?? ""}
+              className="w-64"
+            >
+              <option value="">ทุกคลัง</option>
+              {warehouses.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.name}
+                </option>
+              ))}
+            </Select>
+          </Field>
+          <button type="submit" className={buttonStyles({ size: "md" })}>
+            แสดง
+          </button>
+        </form>
+      </Card>
+
       <Card>
-        <CardHeader title="สต็อกคงเหลือ" description="สินค้าที่เปิดใช้งาน" />
+        <CardHeader
+          title="สต็อกคงเหลือแยกคลัง"
+          description="ยอดรวมต่อสินค้าดูได้ที่หน้าสินค้า"
+        />
         <Table>
           <TableHead>
             <TableRow>
               <TableHeaderCell>SKU</TableHeaderCell>
               <TableHeaderCell>สินค้า</TableHeaderCell>
+              <TableHeaderCell>คลัง</TableHeaderCell>
               <TableHeaderCell className="text-right">คงเหลือ</TableHeaderCell>
               <TableHeaderCell className="text-right">จุดสั่งซื้อ</TableHeaderCell>
               <TableHeaderCell className="text-right">มูลค่าตามทุน</TableHeaderCell>
@@ -92,35 +153,38 @@ export default async function InventoryPage() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {products.length === 0 ? (
-              <TableEmpty colSpan={6} message="ยังไม่มีสินค้า" />
+            {stocks.length === 0 ? (
+              <TableEmpty colSpan={7} message="ยังไม่มีสต็อกในคลังนี้" />
             ) : (
-              products.map((product) => (
-                <TableRow key={product.id}>
-                  <TableCell className="font-medium text-slate-900">
-                    {product.sku}
-                  </TableCell>
-                  <TableCell>{product.name}</TableCell>
-                  <TableCell className="text-right font-medium">
-                    {formatNumber(product.stock_qty)}
-                  </TableCell>
-                  <TableCell className="text-right text-slate-500">
-                    {formatNumber(product.reorder_point)}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {formatCurrency(
-                      product.stock_qty * product.cost_price,
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {product.stock_qty <= product.reorder_point ? (
-                      <Badge tone="warning">ควรสั่งซื้อ</Badge>
-                    ) : (
-                      <Badge tone="success">ปกติ</Badge>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))
+              stocks.map((row) => {
+                const reorder = row.products?.reorder_point ?? 0;
+
+                return (
+                  <TableRow key={row.id}>
+                    <TableCell className="font-medium text-slate-900">
+                      {row.products?.sku ?? "-"}
+                    </TableCell>
+                    <TableCell>{row.products?.name ?? "-"}</TableCell>
+                    <TableCell>{row.warehouses?.name ?? "-"}</TableCell>
+                    <TableCell className="text-right font-medium">
+                      {formatNumber(row.qty)}
+                    </TableCell>
+                    <TableCell className="text-right text-slate-500">
+                      {formatNumber(reorder)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {formatCurrency(row.qty * (row.products?.cost_price ?? 0))}
+                    </TableCell>
+                    <TableCell>
+                      {row.qty <= reorder ? (
+                        <Badge tone="warning">ควรสั่งซื้อ</Badge>
+                      ) : (
+                        <Badge tone="success">ปกติ</Badge>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                );
+              })
             )}
           </TableBody>
         </Table>
@@ -136,6 +200,7 @@ export default async function InventoryPage() {
             <TableRow>
               <TableHeaderCell>วันที่</TableHeaderCell>
               <TableHeaderCell>สินค้า</TableHeaderCell>
+              <TableHeaderCell>คลัง</TableHeaderCell>
               <TableHeaderCell className="text-right">เปลี่ยนแปลง</TableHeaderCell>
               <TableHeaderCell className="text-right">คงเหลือ</TableHeaderCell>
               <TableHeaderCell>อ้างอิง</TableHeaderCell>
@@ -144,7 +209,7 @@ export default async function InventoryPage() {
           </TableHead>
           <TableBody>
             {movements.length === 0 ? (
-              <TableEmpty colSpan={6} message="ยังไม่มีการเคลื่อนไหว" />
+              <TableEmpty colSpan={7} message="ยังไม่มีการเคลื่อนไหว" />
             ) : (
               movements.map((movement) => (
                 <TableRow key={movement.id}>
@@ -159,6 +224,7 @@ export default async function InventoryPage() {
                       {movement.products?.sku}
                     </p>
                   </TableCell>
+                  <TableCell>{movement.warehouses?.name ?? "-"}</TableCell>
                   <TableCell
                     className={`text-right font-medium ${
                       movement.change_qty > 0

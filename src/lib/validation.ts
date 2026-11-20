@@ -27,6 +27,7 @@ const dbMessages: Record<string, string> = {
   CUSTOMER_NOT_FOUND: "ไม่พบลูกค้าที่เลือก",
   SUPPLIER_NOT_FOUND: "ไม่พบผู้ขายที่เลือก",
   BRANCH_NOT_FOUND: "ไม่พบสาขาที่เลือก",
+  WAREHOUSE_NOT_FOUND: "ไม่พบคลังสินค้าที่เลือก หรือคลังถูกปิดใช้งาน",
   ORDER_NOT_FOUND: "ไม่พบเอกสาร",
   ORDER_NOT_RECEIVABLE: "เอกสารนี้รับสินค้าแล้วหรือถูกยกเลิก",
   ORDER_NOT_INVOICEABLE: "เอกสารขายนี้ถูกยกเลิก ไม่สามารถออกใบแจ้งหนี้ได้",

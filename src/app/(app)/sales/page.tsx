@@ -20,17 +20,20 @@ import { branchRepository } from "@/repositories/branch_repository";
 import { customerRepository } from "@/repositories/customer_repository";
 import { productRepository } from "@/repositories/product_repository";
 import { salesRepository } from "@/repositories/sales_repository";
+import { warehouseRepository } from "@/repositories/warehouse_repository";
 
 export const metadata = { title: "ขาย" };
 
 export default async function SalesPage() {
-  const [orders, customers, branches, products, company] = await Promise.all([
-    salesRepository.list(),
-    customerRepository.list(),
-    branchRepository.list(),
-    productRepository.list({ activeOnly: true }),
-    getCurrentCompany(),
-  ]);
+  const [orders, customers, branches, warehouses, products, company] =
+    await Promise.all([
+      salesRepository.list(),
+      customerRepository.list(),
+      branchRepository.list(),
+      warehouseRepository.list(),
+      productRepository.list({ activeOnly: true }),
+      getCurrentCompany(),
+    ]);
 
   const currency = company?.currency ?? "THB";
 
@@ -48,6 +51,9 @@ export default async function SalesPage() {
             branches={branches
               .filter((branch) => branch.is_active)
               .map((branch) => ({ id: branch.id, name: branch.name }))}
+            warehouses={warehouses
+              .filter((warehouse) => warehouse.is_active)
+              .map((warehouse) => ({ id: warehouse.id, name: warehouse.name }))}
             products={products.map((product) => ({
               id: product.id,
               name: product.name,

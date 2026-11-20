@@ -2,22 +2,45 @@ import { and, desc, eq, sql } from "drizzle-orm";
 
 import { db } from "@/db";
 import { firstRow } from "@/db/result";
-import { stockMovements } from "@/db/schema";
+import { productStocks, stockMovements } from "@/db/schema";
 import { requireProfile, requireTenant } from "@/lib/auth";
-import type { StockMovement } from "@/types/database";
+import type { ProductStock, StockMovement } from "@/types/database";
 
 export const inventoryRepository = {
-  async movements(productId?: string): Promise<StockMovement[]> {
+  async stocks(productId?: string, warehouseId?: string): Promise<ProductStock[]> {
+    const profile = await requireProfile();
+
+    const conditions = [eq(productStocks.company_id, profile.company_id)];
+
+    if (productId) {
+      conditions.push(eq(productStocks.product_id, productId));
+    }
+
+    if (warehouseId) {
+      conditions.push(eq(productStocks.warehouse_id, warehouseId));
+    }
+
+    return db.query.productStocks.findMany({
+      where: and(...conditions),
+      orderBy: desc(productStocks.updated_at),
+      with: { products: true, warehouses: true },
+    });
+  },
+
+  async movements(productId?: string, warehouseId?: string): Promise<StockMovement[]> {
     const profile = await requireProfile();
 
     return db.query.stockMovements.findMany({
       where: and(
         eq(stockMovements.company_id, profile.company_id),
         productId ? eq(stockMovements.product_id, productId) : undefined,
+        warehouseId
+          ? eq(stockMovements.warehouse_id, warehouseId)
+          : undefined,
       ),
       orderBy: desc(stockMovements.created_at),
       limit: 200,
-      with: { products: true },
+      with: { products: true, warehouses: true },
     });
   },
 
@@ -25,6 +48,7 @@ export const inventoryRepository = {
     productId: string,
     changeQty: number,
     reason: string | null,
+    warehouseId?: string | null,
   ): Promise<number> {
     const tenant = await requireTenant();
 
@@ -34,7 +58,8 @@ export const inventoryRepository = {
         ${tenant.userId},
         ${productId}::uuid,
         ${changeQty}::numeric,
-        ${reason}
+        ${reason},
+        ${warehouseId ?? null}::uuid
       ) as balance
     `);
 

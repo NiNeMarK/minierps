@@ -30,13 +30,15 @@ export default async function ReportsPage({
     params.to,
   );
 
-  const [sales, purchases, stock, receivables, company] = await Promise.all([
-    reportRepository.sales(from, to),
-    reportRepository.purchases(from, to),
-    reportRepository.stock(),
-    reportRepository.receivables(from, to),
-    getCurrentCompany(),
-  ]);
+  const [sales, purchases, stock, stockByWarehouse, receivables, company] =
+    await Promise.all([
+      reportRepository.sales(from, to),
+      reportRepository.purchases(from, to),
+      reportRepository.stock(),
+      reportRepository.stockByWarehouse(),
+      reportRepository.receivables(from, to),
+      getCurrentCompany(),
+    ]);
 
   const currency = company?.currency ?? "THB";
   const query = `from=${encodeURIComponent(fromValue)}&to=${encodeURIComponent(toValue)}`;
@@ -140,6 +142,10 @@ export default async function ReportsPage({
               label: "รายงานจัดซื้อ",
             },
             { href: `/api/reports/stock?${query}`, label: "รายงานสต็อก" },
+            {
+              href: `/api/reports/warehouse-stock?${query}`,
+              label: "สต็อกแยกคลัง",
+            },
             {
               href: `/api/reports/receivables?${query}`,
               label: "รายงานลูกหนี้",
@@ -249,6 +255,42 @@ export default async function ReportsPage({
                   </TableCell>
                   <TableCell className="text-right">
                     {formatCurrency(product.stock_qty * product.cost_price, currency)}
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </Card>
+
+      <Card>
+        <CardHeader title="สต็อกแยกตามคลัง" />
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableHeaderCell>คลัง</TableHeaderCell>
+              <TableHeaderCell>SKU</TableHeaderCell>
+              <TableHeaderCell>สินค้า</TableHeaderCell>
+              <TableHeaderCell className="text-right">คงเหลือ</TableHeaderCell>
+              <TableHeaderCell className="text-right">มูลค่าทุน</TableHeaderCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {stockByWarehouse.length === 0 ? (
+              <TableEmpty colSpan={5} message="ยังไม่มีข้อมูลสต็อกแยกคลัง" />
+            ) : (
+              stockByWarehouse.map((row) => (
+                <TableRow key={row.id}>
+                  <TableCell>{row.warehouses?.name ?? "-"}</TableCell>
+                  <TableCell className="font-medium">
+                    {row.products?.sku ?? "-"}
+                  </TableCell>
+                  <TableCell>{row.products?.name ?? "-"}</TableCell>
+                  <TableCell className="text-right">
+                    {formatNumber(row.qty)}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {formatCurrency(row.qty * (row.products?.cost_price ?? 0), currency)}
                   </TableCell>
                 </TableRow>
               ))

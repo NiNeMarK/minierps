@@ -17,6 +17,7 @@ import {
   ShoppingCart,
   Truck,
   UserCog,
+  Warehouse,
   Users,
   X,
 } from "lucide-react";
@@ -39,6 +40,7 @@ const groups = [
       { href: "/customers", label: "ลูกค้า", icon: Users },
       { href: "/suppliers", label: "ผู้ขาย", icon: Truck },
       { href: "/branches", label: "สาขา", icon: Building2 },
+      { href: "/warehouses", label: "คลังสินค้า", icon: Warehouse },
     ],
   },
   {
