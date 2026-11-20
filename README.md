@@ -143,7 +143,8 @@ docs/                 # product & technical documentation
 
 ## สถานะและงานถัดไป
 
-ดูรายละเอียดที่ [`docs/IMPLEMENTATION_STATUS.md`](docs/IMPLEMENTATION_STATUS.md)
+- คู่มือผู้ใช้ (พร้อมภาพหน้าจอ): [`docs/USER_GUIDE.md`](docs/USER_GUIDE.md)
+- สถานะการพัฒนา: [`docs/IMPLEMENTATION_STATUS.md`](docs/IMPLEMENTATION_STATUS.md)
 
 สิ่งที่ยังไม่อยู่ในรอบนี้: คลังสินค้าหลายคลังใน UI, หน้าเชิญผู้ใช้แบบส่งอีเมล,
 รายงาน PDF/Excel, และชุดทดสอบอัตโนมัติ

@@ -54,6 +54,12 @@
 5. **Audit log UI** — บันทึกการเปลี่ยนแปลงสิทธิ์/การเงิน
 6. **POS / CRM / Promotion** — Phase 2 ตาม roadmap
 
+## คู่มือที่เกี่ยวข้อง
+
+- [คู่มือผู้ใช้ฉบับเต็ม (พร้อมภาพหน้าจอ)](USER_GUIDE.md)
+- [โครงสร้างฐานข้อมูล](DATABASE.md)
+- [คู่มือ deploy](DEPLOYMENT.md)
+
 ## หมายเหตุทางเทคนิค
 
 - Next.js 16 ใช้ `proxy.ts` แทน `middleware.ts`; `cookies()`/`headers()` เป็น async
